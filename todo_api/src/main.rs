@@ -1,3 +1,5 @@
+mod error;
+
 #[macro_use]
 extern crate rocket;
 
