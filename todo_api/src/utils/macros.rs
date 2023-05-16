@@ -10,4 +10,4 @@ macro_rules! map {
     };
 }
 
-pub (crate) use map;
+pub(crate) use map;

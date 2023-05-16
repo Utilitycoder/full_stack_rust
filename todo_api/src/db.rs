@@ -4,10 +4,11 @@ use crate::{prelude::W, utils::macros::map};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use surrealdb::{
-    sql::{thing, Array, Object, Value}, 
-    Response, kvs::Datastore, dbs::Session
+    dbs::Session,
+    kvs::Datastore,
+    sql::{thing, Array, Object, Value},
+    Response,
 };
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Task {
@@ -58,7 +59,11 @@ pub struct DB {
 }
 
 impl DB {
-    pub async fn execute(&self, query: &str, vars: Option<BTreeMap<String, Value>>) -> Result<Vec<surrealdb::dbs::Response>, crate::error::Error> {
+    pub async fn execute(
+        &self,
+        query: &str,
+        vars: Option<BTreeMap<String, Value>>,
+    ) -> Result<Vec<surrealdb::dbs::Response>, crate::error::Error> {
         let res = match self.ds.execute(query, &self.sesh, vars, false).await {
             Ok(res) => res,
             Err(e) => {
@@ -122,7 +127,7 @@ impl DB {
 
         let array: Array = W(response).try_into()?;
 
-        array.into_iter().map(|v| W(v).try_into()).collect() 
+        array.into_iter().map(|v| W(v).try_into()).collect()
     }
 
     pub async fn toggle_task(&self, id: String) -> Result<AffectedRows, crate::error::Error> {
@@ -157,4 +162,71 @@ impl DB {
 }
 
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use surrealdb::kvs::Datastore;
+    use surrealdb::sql::Value;
+    use surrealdb::dbs::Session;
+    use std::collections::BTreeMap;
+    use std::sync::Arc;
+    use std::env;
 
+    #[tokio::test]
+    async fn test_add_task() {
+        let ds = Arc::new(Datastore::new("memory").await.unwrap());
+        let sesh = Session::for_db("my_db", "my_ns");
+        let db = DB { ds, sesh };
+
+        let title = "test".to_string();
+        let res = db.add_task(title).await.unwrap();
+        let id = res.get("id").unwrap();
+        let id = id.to_string();
+        let res = db.get_task(id).await.unwrap();
+        let title = res.get("title").unwrap().to_string();
+        assert_eq!(title, "test");
+    }
+
+    // #[tokio::test]
+    // async fn test_get_all_tasks() {
+    //     let ds = Arc::new(Datastore::new());
+    //     let sesh = Session::new();
+    //     let db = DB { ds, sesh };
+
+    //     let title = "test".to_string();
+    //     let res = db.add_task(title).await.unwrap();
+    //     let id = res.get("id").unwrap().as_str().unwrap();
+    //     let id = id.to_string();
+    //     let res = db.get_all_tasks().await.unwrap();
+    //     let title = res[0].get("title").unwrap().as_str().unwrap();
+    //     assert_eq!(title, "test");
+    // }
+
+    // #[tokio::test]
+    // async fn test_toggle_task() {
+    //     let ds = Arc::new(Datastore::new());
+    //     let sesh = Session::new();
+    //     let db = DB { ds, sesh };
+
+    //     let title = "test".to_string();
+    //     let res = db.add_task(title).await.unwrap();
+    //     let id = res.get("id").unwrap().as_str().unwrap();
+    //     let id = id.to_string();
+    //     let res = db.toggle_task(id).await.unwrap();
+    //     assert_eq!(res.affected_rows, 1);
+    // }
+
+    // #[tokio::test]
+    // async fn test_delete_task() {
+    //     let ds = Arc::new(Datastore::new());
+    //     let sesh = Session::new();
+    //     let db = DB { ds, sesh };
+
+    //     let title = "test".to_string();
+    //     let res = db.add_task(title).await.unwrap();
+    //     let id = res.get("id").unwrap().as_str().unwrap();
+    //     let id = id.to_string();
+    //     let res = db.delete_task(id).await.unwrap();
+    //     assert_eq!(res.affected_rows, 1);
+    // }
+}

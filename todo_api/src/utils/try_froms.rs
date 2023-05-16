@@ -1,5 +1,5 @@
-use surrealdb::sql::{Array, Object, Value};
 use crate::prelude::{Error, W};
+use surrealdb::sql::{Array, Object, Value};
 
 impl TryFrom<W<Value>> for Object {
     type Error = Error;
@@ -17,7 +17,6 @@ impl TryFrom<W<Value>> for Array {
         match val.0 {
             Value::Array(obj) => Ok(obj),
             _ => Err(Error::XValueNotOfType("Array")),
-
         }
     }
 }

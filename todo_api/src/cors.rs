@@ -4,7 +4,6 @@ use rocket::{
     Request, Response,
 };
 
-
 pub struct CORS;
 
 #[rocket::async_trait]

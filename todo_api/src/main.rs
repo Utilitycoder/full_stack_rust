@@ -4,9 +4,7 @@ extern crate rocket;
 use rocket::{serde::json::Json, State};
 
 use std::{io::ErrorKind, sync::Arc};
-use surrealdb::{sql::Object, kvs::Datastore
-, dbs::Session
-};
+use surrealdb::{dbs::Session, kvs::Datastore, sql::Object};
 
 use crate::db::{AffectedRows, DB};
 
@@ -17,3 +15,63 @@ mod db;
 mod error;
 mod prelude;
 mod utils;
+
+#[post("/task/<title>")]
+async fn add_task(title: String, db: &State<DB>) -> Result<Json<Object>, std::io::Error> {
+    let task = db
+        .add_task(title)
+        .await
+        .map_err(|_| std::io::Error::new(ErrorKind::Other, "Error adding task"))?;
+    Ok(Json(task))
+}
+
+#[get("/task/<id>")]
+async fn get_task(id: String, db: &State<DB>) -> Result<Json<Object>, std::io::Error> {
+    let task = db
+        .get_task(id)
+        .await
+        .map_err(|_| std::io::Error::new(ErrorKind::Other, "Error getting task"))?;
+    Ok(Json(task))
+}
+
+#[get("/tasks")]
+async fn get_tasks(db: &State<DB>) -> Result<Json<Vec<Object>>, std::io::Error> {
+    let tasks = db
+        .get_all_tasks()
+        .await
+        .map_err(|_| std::io::Error::new(ErrorKind::Other, "Error getting tasks"))?;
+    Ok(Json(tasks))
+}
+
+#[delete("/task/<id>")]
+async fn delete_task(id: String, db: &State<DB>) -> Result<Json<AffectedRows>, std::io::Error> {
+    let affected_rows = db
+        .delete_task(id)
+        .await
+        .map_err(|_| std::io::Error::new(ErrorKind::Other, "Error deleting task"))?;
+    Ok(Json(affected_rows))
+}
+
+#[patch("/task/<id>")]
+async fn toggle_task(id: String, db: &State<DB>) -> Result<Json<AffectedRows>, std::io::Error> {
+    let affected_rows = db
+        .toggle_task(id)
+        .await
+        .map_err(|e| std::io::Error::new(ErrorKind::Other, e.to_string()))?;
+    Ok(Json(affected_rows))
+}
+
+#[launch]
+async fn rocket() -> _ {
+    let ds = Arc::new(Datastore::new("memory").await.unwrap());
+    let sesh = Session::for_db("my_ns", "my_db");
+    let db = DB { ds, sesh };
+
+    rocket::build()
+        .mount(
+            "/",
+            routes![add_task, get_task, get_tasks, delete_task, toggle_task],
+        )
+        .manage(db)
+        .attach(CORS)
+}
