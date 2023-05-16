@@ -3,14 +3,17 @@ use std::{collections::BTreeMap, sync::Arc};
 use crate::{prelude::W, utils::macros::map};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use surrealdb::{sql::{thing, Array, Object, Value}, Datastore, Session, Response};
+use surrealdb::{
+    sql::{thing, Array, Object, Value}, 
+    Response, kvs::Datastore, dbs::Session
+};
 
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Task {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub id: Option<string>,
-    pub title: string,
+    pub id: Option<String>,
+    pub title: String,
     pub completed: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub created_at: Option<DateTime<Utc>>,
@@ -19,7 +22,7 @@ pub struct Task {
 impl From<Task> for Value {
     fn from(val: Task) -> Self {
         match val.id {
-            some(v) => map![
+            Some(v) => map![
                 "id".into() => v.into(),
                 "title".into() => val.title.into(),
                 "completed".into() => val.completed.into(),
@@ -34,7 +37,7 @@ impl From<Task> for Value {
     }
 }
 
-impl Creatable for task {}
+impl Creatable for Task {}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AffectedRows {
@@ -43,20 +46,25 @@ pub struct AffectedRows {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RowId {
-    pub id: string,
+    pub id: String,
 }
 
 pub trait Creatable: Into<Value> {}
 
 #[derive(Clone)]
 pub struct DB {
-    pub ds: Arc<Session>,
-    pub session: Session,
+    pub ds: Arc<Datastore>,
+    pub sesh: Session,
 }
 
 impl DB {
-    pub async fn execute(&self, query: &str, vars: Option<BTreeMap<String, Value>>) -> Result<Vec<Response>, crate::error::Error> {
-        let res = self.ds.execute(query, self.session, vars, false).await?;
+    pub async fn execute(&self, query: &str, vars: Option<BTreeMap<String, Value>>) -> Result<Vec<surrealdb::dbs::Response>, crate::error::Error> {
+        let res = match self.ds.execute(query, &self.sesh, vars, false).await {
+            Ok(res) => res,
+            Err(e) => {
+                return Err(crate::error::Error::Surreal(surrealdb::Error::Db(e)));
+            }
+        };
         Ok(res)
     }
 
@@ -66,18 +74,36 @@ impl DB {
         let res = self.execute(sql, Some(vars)).await?;
 
         let first_res = res.into_iter().next().expect("no response");
-        W(first_res.result?.first()).try_into()
+        let response = match first_res.result {
+            Ok(v) => v.first(),
+            Err(e) => {
+                return Err(crate::error::Error::Surreal(surrealdb::Error::Db(e)));
+            }
+        };
+        W(response).try_into()
     }
 
     pub async fn get_task(&self, id: String) -> Result<Object, crate::error::Error> {
         let sql = "SELECT * FROM $th";
         let tid = format!("{}", id);
-        let vars: BTreeMap<String, Value> = map!["th".into() => thing(&tid)?.into()];
+        let thing = match thing(&tid) {
+            Ok(v) => v,
+            Err(e) => {
+                return Err(crate::error::Error::Surreal(surrealdb::Error::Db(e)));
+            }
+        };
+        let vars: BTreeMap<String, Value> = map!["th".into() => thing.into()];
         let ress = self.execute(sql, Some(vars)).await?;
 
         let first_res = ress.into_iter().next().expect("no response");
+        let response = match first_res.result {
+            Ok(v) => v.first(),
+            Err(e) => {
+                return Err(crate::error::Error::Surreal(surrealdb::Error::Db(e)));
+            }
+        };
 
-        W(first_res.result?.first()).try_into()
+        W(response).try_into()
     }
 
     pub async fn get_all_tasks(&self) -> Result<Vec<Object>, crate::error::Error> {
@@ -87,7 +113,14 @@ impl DB {
 
         let first_res = ress.into_iter().next().expect("no response");
 
-        let array: Array = W(first_res.result?.first()).try_into()?;
+        let response = match first_res.result {
+            Ok(v) => v.first(),
+            Err(e) => {
+                return Err(crate::error::Error::Surreal(surrealdb::Error::Db(e)));
+            }
+        };
+
+        let array: Array = W(response).try_into()?;
 
         array.into_iter().map(|v| W(v).try_into()).collect() 
     }
@@ -95,7 +128,13 @@ impl DB {
     pub async fn toggle_task(&self, id: String) -> Result<AffectedRows, crate::error::Error> {
         let sql = "UPDATE $th SET completed = function() { return !this.completed; }";
         let tid = format!("{}", id);
-        let vars: BTreeMap<String, Value> = map!["th".into() => thing(&tid)?.into()];
+        let thing = match thing(&tid) {
+            Ok(v) => v,
+            Err(e) => {
+                return Err(crate::error::Error::Surreal(surrealdb::Error::Db(e)));
+            }
+        };
+        let vars: BTreeMap<String, Value> = map!["th".into() => thing.into()];
         let _ = self.execute(sql, Some(vars)).await?;
 
         Ok(AffectedRows { affected_rows: 1 })
@@ -104,7 +143,13 @@ impl DB {
     pub async fn delete_task(&self, id: String) -> Result<AffectedRows, crate::error::Error> {
         let sql = "DELETE FROM $th";
         let tid = format!("{}", id);
-        let vars: BTreeMap<String, Value> = map!["th".into() => thing(&tid)?.into()];
+        let thing = match thing(&tid) {
+            Ok(v) => v,
+            Err(e) => {
+                return Err(crate::error::Error::Surreal(surrealdb::Error::Db(e)));
+            }
+        };
+        let vars: BTreeMap<String, Value> = map!["th".into() => thing.into()];
         let _ = self.execute(sql, Some(vars)).await?;
 
         Ok(AffectedRows { affected_rows: 1 })
