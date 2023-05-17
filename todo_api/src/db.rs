@@ -168,13 +168,14 @@ mod tests {
     use surrealdb::kvs::Datastore;
     use surrealdb::sql::Value;
     use surrealdb::dbs::Session;
+    use surrealdb::err::Error;
     use std::collections::BTreeMap;
     use std::sync::Arc;
     use std::env;
 
     #[tokio::test]
-    async fn test_add_task() {
-        let ds = Arc::new(Datastore::new("memory").await.unwrap());
+    async fn test_add_task() -> Result<(), Error> {
+        let ds = Arc::new(Datastore::new("memory").await?);
         let sesh = Session::for_db("my_db", "my_ns");
         let db = DB { ds, sesh };
 
@@ -185,6 +186,7 @@ mod tests {
         let res = db.get_task(id).await.unwrap();
         let title = res.get("title").unwrap().to_string();
         assert_eq!(title, "test");
+        Ok(())
     }
 
     // #[tokio::test]
