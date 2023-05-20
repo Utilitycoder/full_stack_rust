@@ -1,15 +1,15 @@
 # Todo App Backend
 
-Features
+## Features
 
-User Registration: Users can create an account to access the todo list application.
+* User Registration: Users can create an account to access the todo list application.
 
-Authentication: Secure login system to protect user data and tasks.
+* Authentication: Secure login system to protect user data and tasks.
 
-Create Tasks: Users can add new tasks to their list.
+* Create Tasks: Users can add new tasks to their list.
 
-Update Tasks: Users can edit or mark tasks as completed.
+* Update Tasks: Users can edit or mark tasks as completed.
 
-Delete Tasks: Users can remove tasks from their list.
+* Delete Tasks: Users can remove tasks from their list.
 
-View Tasks: Users can see their current list of tasks.
+* View Tasks: Users can see their current list of tasks.
