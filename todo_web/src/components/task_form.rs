@@ -14,24 +14,23 @@ pub fn task_form(TaskFormProps { on_create_task }: &TaskFormProps) -> html {
         let input_node_ref = input_ref.clone();
         let on_create_task = on_create_task.clone();
 
- 
-    Callback::from(move |_| {
-        let input = input_node_ref.cast::<HtmlInputElement>();
-    
-        if let Some(input) = input {
-            on_create_task.emit(input.value());
-            input.set_value("");
-        }
-    })
-    }
+        Callback::from(move |_| {
+            let input = input_node_ref.cast::<HtmlInputElement>();
+
+            if let Some(input) = input {
+                on_create_task.emit(input.value());
+                input.set_value("");
+            }
+        })
+    };
 
     html! {
         <div>
-            <label for="new-task"> 
+            <label for="new-task">
                 { "New Task" }
             </label>
             <div class="center">
-                <input ref=input_ref id="new-task" type="text" />
+                <input ref={input_ref} id="new-task" type="text" />
                 <button onclick=on_click>
                     { "Add" }
                 </button>

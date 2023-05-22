@@ -38,8 +38,8 @@ pub fn task(
         <li class={classes!(list_item_class, "center")}>
                 <input
                     type="checkbox"
-                    checked=task.completed
-                    onclick=on_toggle
+                    checked={task.completed}
+                    onclick={on_toggle}
                 />
                 <label>{ &task.title }</label>
                 <button onclick=on_delete_click>{"Delete"}</button>

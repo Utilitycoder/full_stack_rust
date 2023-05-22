@@ -18,13 +18,18 @@ pub fn task_list(
         on_delete_task,
     }: &TaskListProps,
 ) -> Html {
-    let tasks: Html = tasks().iter().map(|task| html! (
-        <TaskItem
-            task={task}
-            on_toggle_task={on_toggle_task.clone()}
-            on_delete_task={on_delete_task.clone()}
-        />
-    )).collect();
+    let tasks: Html = tasks()
+        .iter()
+        .map(|task| {
+            html! (
+                <TaskItem
+                    task={task}
+                    on_toggle_task={on_toggle_task.clone()}
+                    on_delete_task={on_delete_task.clone()}
+                />
+            )
+        })
+        .collect();
 
     html! {
         <ul id="task-list">
