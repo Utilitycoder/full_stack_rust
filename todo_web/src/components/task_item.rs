@@ -42,7 +42,7 @@ pub fn task(
                     onclick={on_toggle}
                 />
                 <label>{ &task.title }</label>
-                <button onclick=on_delete_click>{"Delete"}</button>
+                <button onclick={on_delete_click}>{"Delete"}</button>
         </li>
 
     }

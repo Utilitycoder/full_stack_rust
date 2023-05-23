@@ -18,4 +18,3 @@ pub struct AffectedRows {
 pub struct RowId {
     pub id: String,
 }
-

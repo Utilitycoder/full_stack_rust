@@ -17,40 +17,36 @@ impl TaskController {
     pub fn init_tasks(&self) {
         let tasks = self.state.clone();
         wasm_bindgen_futures::spawn_local(async move {
-            let fetched_tasks = todo_api::get_tasks().await.unwrap();
+            let fetched_tasks = todo_api::fetch_tasks().await.unwrap();
             tasks.dispatch(TaskAction::Set(fetched_tasks));
         });
     }
 
-    pub fn fetch_tasks(&self) {
-        let state = self.state.clone();
-        let callback = move |tasks| {
-            state.dispatch(TaskAction::Set(tasks));
-        };
-        todo_api::get_tasks(callback);
-    }
-
-    pub fn add_task(&self, title: String) {
-        let state = self.state.clone();
-        let callback = move |task| {
-            state.dispatch(TaskAction::Add(task));
-        };
-        todo_api::add_task(title, callback);
+    pub fn create_task(&self, title: String) {
+        let tasks = self.state.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let response = todo_api::create_task(&title).await.unwrap();
+            tasks.dispatch(TaskAction::Add(response));
+        });
     }
 
     pub fn delete_task(&self, id: String) {
-        let state = self.state.clone();
-        let callback = move |_| {
-            state.dispatch(TaskAction::Delete(id));
-        };
-        todo_api::delete_task(id, callback);
+        let tasks = self.state.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let response = todo_api::delete_task(id.clone()).await.unwrap();
+            if response.affected_rows == 1 {
+                tasks.dispatch(TaskAction::Delete(id.clone()));
+            }
+        });
     }
 
     pub fn toggle_task(&self, id: String) {
-        let state = self.state.clone();
-        let callback = move |_| {
-            state.dispatch(TaskAction::Toggle(id));
-        };
-        todo_api::toggle_task(id, callback);
+        let tasks = self.state.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let response = todo_api::toggle_task(id.clone()).await.unwrap();
+            if response.affected_rows == 1 {
+                tasks.dispatch(TaskAction::Toggle(id.clone()));
+            }
+        });
     }
 }

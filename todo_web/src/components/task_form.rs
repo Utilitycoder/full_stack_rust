@@ -31,7 +31,7 @@ pub fn task_form(TaskFormProps { on_create_task }: &TaskFormProps) -> html {
             </label>
             <div class="center">
                 <input ref={input_ref} id="new-task" type="text" />
-                <button onclick=on_click>
+                <button onclick={on_click}>
                     { "Add" }
                 </button>
             </div>
