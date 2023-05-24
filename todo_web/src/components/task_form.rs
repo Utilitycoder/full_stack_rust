@@ -1,5 +1,5 @@
 use web_sys::HtmlInputElement;
-use yew::{function_component, html, use_node_ref, Callback, Properties};
+use yew::{function_component, html, Html, use_node_ref, Callback, Properties};
 
 #[derive(Properties, PartialEq)]
 pub struct TaskFormProps {
@@ -7,7 +7,7 @@ pub struct TaskFormProps {
 }
 
 #[function_component(TaskForm)]
-pub fn task_form(TaskFormProps { on_create_task }: &TaskFormProps) -> html {
+pub fn task_form(TaskFormProps { on_create_task }: &TaskFormProps) -> Html {
     let input_ref = use_node_ref();
 
     let on_click = {

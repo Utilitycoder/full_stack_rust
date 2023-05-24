@@ -1,4 +1,4 @@
-use yew::{classes, function_component, html, Callback, Properties};
+use yew::{classes, function_component, html, Html, Callback, Properties};
 
 use crate::models::Task;
 
@@ -16,7 +16,7 @@ pub fn task(
         on_toggle_task,
         on_delete_task,
     }: &TaskItemProps,
-) -> html {
+) -> Html {
     let list_item_class = match task.completed {
         true => Some("completed"),
         false => None,

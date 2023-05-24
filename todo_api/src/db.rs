@@ -169,9 +169,8 @@ mod tests {
     use surrealdb::sql::Value;
     use surrealdb::dbs::Session;
     use surrealdb::err::Error;
-    use std::collections::BTreeMap;
     use std::sync::Arc;
-    use std::env;
+
 
     #[tokio::test]
     async fn test_add_task() -> Result<(), Error> {
@@ -189,20 +188,20 @@ mod tests {
         Ok(())
     }
 
-    // #[tokio::test]
-    // async fn test_get_all_tasks() {
-    //     let ds = Arc::new(Datastore::new());
-    //     let sesh = Session::new();
-    //     let db = DB { ds, sesh };
+    #[tokio::test]
+    async fn test_get_all_tasks() {
+        let ds = Arc::new(Datastore::new("memory").await.unwrap());
+        let sesh = Session::for_db("my_db", "my_ns");
+        let db = DB { ds, sesh };
 
-    //     let title = "test".to_string();
-    //     let res = db.add_task(title).await.unwrap();
-    //     let id = res.get("id").unwrap().as_str().unwrap();
-    //     let id = id.to_string();
-    //     let res = db.get_all_tasks().await.unwrap();
-    //     let title = res[0].get("title").unwrap().as_str().unwrap();
-    //     assert_eq!(title, "test");
-    // }
+        let title = "test".to_string();
+        let res = db.add_task(title).await.unwrap();
+        let id = res.get("id").unwrap();
+        let id = id.to_string();
+        let res = db.get_all_tasks().await.unwrap();
+        let title = res[0].get("title").unwrap().to_string();
+        assert_eq!(title, "test");
+    }
 
     // #[tokio::test]
     // async fn test_toggle_task() {
