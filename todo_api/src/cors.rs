@@ -4,6 +4,7 @@ use rocket::{
     Request, Response,
 };
 
+#[allow(clippy::upper_case_acronyms)]
 pub struct CORS;
 
 #[rocket::async_trait]
